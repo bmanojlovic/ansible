@@ -96,8 +96,6 @@ options:
       - List of VPC security group IDs to associate with the Lambda function. Required when vpc_subnet_ids is used.
     required: false
     default: None
-notes:
-  - 'Currently this module only supports uploaded code via S3'
 author:
     - 'Steyn Huizinga (@steynovich)'
 extends_documentation_fragment:
@@ -141,7 +139,7 @@ tasks:
 
 RETURN = '''
 output:
-  description: the data returned by create_function in boto3
+  description: the data returned by get_function in boto3
   returned: success
   type: dict
   sample:
@@ -316,7 +314,7 @@ def main():
         # If VPC configuration is desired
         if vpc_subnet_ids or vpc_security_group_ids:
             if len(vpc_subnet_ids) < 1:
-                    module.fail_json(msg='At least 1 subnet is required')
+                module.fail_json(msg='At least 1 subnet is required')
 
             if len(vpc_security_group_ids) < 1:
                 module.fail_json(msg='At least 1 security group is required')

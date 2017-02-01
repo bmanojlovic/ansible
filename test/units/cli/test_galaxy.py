@@ -73,7 +73,7 @@ class TestGalaxy(unittest.TestCase):
             tar = tarfile.open(output_file, "w:gz")
             tar.add(source_dir, arcname=os.path.basename(source_dir))
         except AttributeError: # tarfile obj. has no attribute __exit__ prior to python 2.    7
-                pass
+            pass
         finally:  # ensuring closure of tarfile obj
             tar.close()
 
@@ -120,7 +120,7 @@ class TestGalaxy(unittest.TestCase):
         with patch.object(ansible.cli.CLI, "execute", return_value=None) as mock_ex:
             with patch.object(ansible.cli.CLI, "run", return_value=None) as mock_run:
                 gc.run()
-                
+
                 # testing
                 self.assertEqual(mock_run.call_count, 1)
                 self.assertTrue(isinstance(gc.api, ansible.galaxy.api.GalaxyAPI))

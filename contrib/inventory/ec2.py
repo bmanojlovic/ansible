@@ -162,6 +162,8 @@ class Ec2Inventory(object):
         # and availability zones
         self.inventory = self._empty_inventory()
 
+        self.aws_account_id = None
+
         # Index of hostname (address) to instance ID
         self.index = {}
 
@@ -306,13 +308,13 @@ class Ec2Inventory(object):
         if self.all_instances:
             self.ec2_instance_states = ec2_valid_instance_states
         elif config.has_option('ec2', 'instance_states'):
-          for instance_state in config.get('ec2', 'instance_states').split(','):
-            instance_state = instance_state.strip()
-            if instance_state not in ec2_valid_instance_states:
-              continue
-            self.ec2_instance_states.append(instance_state)
+            for instance_state in config.get('ec2', 'instance_states').split(','):
+                instance_state = instance_state.strip()
+                if instance_state not in ec2_valid_instance_states:
+                    continue
+                self.ec2_instance_states.append(instance_state)
         else:
-          self.ec2_instance_states = ['running']
+            self.ec2_instance_states = ['running']
 
         # Return all RDS instances? (if RDS is enabled)
         if config.has_option('ec2', 'all_rds_instances') and self.rds_enabled:
@@ -338,8 +340,8 @@ class Ec2Inventory(object):
         else:
             self.all_elasticache_nodes = False
 
-        # boto configuration profile (prefer CLI argument)
-        self.boto_profile = self.args.boto_profile
+        # boto configuration profile (prefer CLI argument then environment variables then config file)
+        self.boto_profile = self.args.boto_profile or os.environ.get('AWS_PROFILE')
         if config.has_option('ec2', 'boto_profile') and not self.boto_profile:
             self.boto_profile = config.get('ec2', 'boto_profile')
 
@@ -374,14 +376,11 @@ class Ec2Inventory(object):
             os.makedirs(cache_dir)
 
         cache_name = 'ansible-ec2'
-        aws_profile = lambda: (self.boto_profile or
-                               os.environ.get('AWS_PROFILE') or
-                               os.environ.get('AWS_ACCESS_KEY_ID') or
-                               self.credentials.get('aws_access_key_id', None))
-        if aws_profile():
-            cache_name = '%s-%s' % (cache_name, aws_profile())
-        self.cache_path_cache = cache_dir + "/%s.cache" % cache_name
-        self.cache_path_index = cache_dir + "/%s.index" % cache_name
+        cache_id = self.boto_profile or os.environ.get('AWS_ACCESS_KEY_ID', self.credentials.get('aws_access_key_id'))
+        if cache_id:
+            cache_name = '%s-%s' % (cache_name, cache_id)
+        self.cache_path_cache = os.path.join(cache_dir, "%s.cache" % cache_name)
+        self.cache_path_index = os.path.join(cache_dir, "%s.index" % cache_name)
         self.cache_max_age = config.getint('ec2', 'cache_max_age')
 
         if config.has_option('ec2', 'expand_csv_tags'):
@@ -420,6 +419,7 @@ class Ec2Inventory(object):
             'group_by_elasticache_cluster',
             'group_by_elasticache_parameter_group',
             'group_by_elasticache_replication_group',
+            'group_by_aws_account',
         ]
         for option in group_by_options:
             if config.has_option('ec2', option):
@@ -439,7 +439,7 @@ class Ec2Inventory(object):
 
         # Do we need to exclude hosts that match a pattern?
         try:
-            pattern_exclude = config.get('ec2', 'pattern_exclude');
+            pattern_exclude = config.get('ec2', 'pattern_exclude')
             if pattern_exclude and len(pattern_exclude) > 0:
                 self.pattern_exclude = re.compile(pattern_exclude)
             else:
@@ -554,6 +554,9 @@ class Ec2Inventory(object):
             tags_by_instance_id = defaultdict(dict)
             for tag in tags:
                 tags_by_instance_id[tag.res_id][tag.name] = tag.value
+
+            if (not self.aws_account_id) and reservations:
+                self.aws_account_id = reservations[0].owner_id
 
             for reservation in reservations:
                 for instance in reservation.instances:
@@ -862,6 +865,12 @@ class Ec2Inventory(object):
             except AttributeError:
                 self.fail_with_error('\n'.join(['Package boto seems a bit older.',
                                             'Please upgrade boto >= 2.3.0.']))
+
+        # Inventory: Group by AWS account ID
+        if self.group_by_aws_account:
+            self.push(self.inventory, self.aws_account_id, dest)
+            if self.nested_groups:
+                self.push_group(self.inventory, 'accounts', self.aws_account_id)
 
         # Inventory: Group by tag keys
         if self.group_by_tag_keys:
@@ -1334,6 +1343,8 @@ class Ec2Inventory(object):
                 #print key
                 #print type(value)
                 #print value
+
+        instance_vars[self.to_safe('ec2_account_id')] = self.aws_account_id
 
         return instance_vars
 

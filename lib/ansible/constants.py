@@ -201,6 +201,7 @@ DEFAULT_ROLES_PATH        = get_config(p, DEFAULTS, 'roles_path',       'ANSIBLE
 DEFAULT_REMOTE_TMP        = get_config(p, DEFAULTS, 'remote_tmp',       'ANSIBLE_REMOTE_TEMP',      '~/.ansible/tmp')
 DEFAULT_LOCAL_TMP         = get_config(p, DEFAULTS, 'local_tmp',        'ANSIBLE_LOCAL_TEMP',      '~/.ansible/tmp', value_type='tmppath')
 DEFAULT_MODULE_NAME       = get_config(p, DEFAULTS, 'module_name',      None,                       'command')
+DEFAULT_FACT_PATH         = get_config(p, DEFAULTS, 'fact_path',        'ANSIBLE_FACT_PATH', None, value_type='path')
 DEFAULT_FORKS             = get_config(p, DEFAULTS, 'forks',            'ANSIBLE_FORKS',            5, value_type='integer')
 DEFAULT_MODULE_ARGS       = get_config(p, DEFAULTS, 'module_args',      'ANSIBLE_MODULE_ARGS',      '')
 DEFAULT_MODULE_LANG       = get_config(p, DEFAULTS, 'module_lang',      'ANSIBLE_MODULE_LANG',      os.getenv('LANG', 'en_US.UTF-8'))
@@ -217,6 +218,7 @@ DEFAULT_VAULT_PASSWORD_FILE = get_config(p, DEFAULTS, 'vault_password_file', 'AN
 DEFAULT_TRANSPORT         = get_config(p, DEFAULTS, 'transport',        'ANSIBLE_TRANSPORT',        'smart')
 DEFAULT_SCP_IF_SSH        = get_config(p, 'ssh_connection', 'scp_if_ssh',       'ANSIBLE_SCP_IF_SSH',       'smart')
 DEFAULT_SFTP_BATCH_MODE   = get_config(p, 'ssh_connection', 'sftp_batch_mode', 'ANSIBLE_SFTP_BATCH_MODE', True, value_type='boolean')
+DEFAULT_SSH_TRANSFER_METHOD = get_config(p, 'ssh_connection', 'transfer_method', 'ANSIBLE_SSH_TRANSFER_METHOD', None)
 DEFAULT_MANAGED_STR       = get_config(p, DEFAULTS, 'ansible_managed',  None,           'Ansible managed')
 DEFAULT_SYSLOG_FACILITY   = get_config(p, DEFAULTS, 'syslog_facility',  'ANSIBLE_SYSLOG_FACILITY', 'LOG_USER')
 DEFAULT_KEEP_REMOTE_FILES = get_config(p, DEFAULTS, 'keep_remote_files', 'ANSIBLE_KEEP_REMOTE_FILES', False, value_type='boolean')
@@ -395,3 +397,6 @@ LOCALHOST                 = frozenset(['127.0.0.1', 'localhost', '::1'])
 # module search
 BLACKLIST_EXTS = ('.pyc', '.swp', '.bak', '~', '.rpm', '.md', '.txt')
 IGNORE_FILES = ["COPYING", "CONTRIBUTING", "LICENSE", "README", "VERSION", "GUIDELINES"]
+INTERNAL_RESULT_KEYS      = ['add_host', 'add_group']
+RESTRICTED_RESULT_KEYS    = ['ansible_rsync_path', 'ansible_playbook_python']
+

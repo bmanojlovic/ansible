@@ -333,7 +333,7 @@ class AzureRMModuleBase(object):
     def _get_credentials(self, params):
         # Get authentication credentials.
         # Precedence: module parameters-> environment variables-> default profile in ~/.azure/credentials.
-        
+
         self.log('Getting credentials')
 
         arg_credentials = dict()
@@ -345,11 +345,11 @@ class AzureRMModuleBase(object):
             self.log('Retrieving credentials with profile parameter.')
             credentials = self._get_profile(arg_credentials['profile'])
             return credentials
-        
+
         if arg_credentials['subscription_id']:
             self.log('Received credentials from parameters.')
             return arg_credentials
-        
+
         # try environment
         env_credentials = self._get_env_credentials()
         if env_credentials:
@@ -375,11 +375,11 @@ class AzureRMModuleBase(object):
         '''
         dependencies = dict()
         if enum_modules:
-            for module_name in enum_modules:  
-               mod = importlib.import_module(module_name)
-               for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
-                   dependencies[mod_class_name] = mod_class_obj 
-            self.log("dependencies: ");
+            for module_name in enum_modules:
+                mod = importlib.import_module(module_name)
+                for mod_class_name, mod_class_obj in inspect.getmembers(mod, predicate=inspect.isclass):
+                    dependencies[mod_class_name] = mod_class_obj
+            self.log("dependencies: ")
             self.log(str(dependencies))
         serializer = Serializer(classes=dependencies)
         return serializer.body(obj, class_name)
@@ -567,7 +567,11 @@ class AzureRMModuleBase(object):
             resource_client = self.rm_client
             resource_client.providers.register(key)
         except Exception as exc:
-            self.fail("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("One-time registration of {0} failed - {1}".format(key, str(exc)))
+            self.log("You might need to register {0} using an admin account".format(key))
+            self.log(("To register a provider using the Python CLI: "
+                      "https://docs.microsoft.com/azure/azure-resource-manager/"
+                      "resource-manager-common-deployment-errors#noregisteredproviderfound"))
 
     @property
     def storage_client(self):
